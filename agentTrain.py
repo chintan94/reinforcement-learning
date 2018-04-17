@@ -7,8 +7,8 @@ from environment import Policy, Environment
 
 
 alpha = 1e-3
-numtrajs = 1
-iterations = 1
+numtrajs = 10
+iterations = 1000
 
 env = Environment()
 obsSize = env.obsSize
