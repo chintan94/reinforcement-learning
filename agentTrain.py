@@ -1,19 +1,3 @@
-# ---------------------------------RL agent ---------------------------------------
-# State is defined as -- time_remaining(in secs), quantity remaining(in lotSizes), current_min, "Momentum", bid_price
-# Action is an Integer <= quantity remaining
-# Action taken specifies the number of lot sizes the agent decides to sell at Bid Price
-# Orders are assumed to be immediate
-
-# The problem to optimize for the RL agent is --
-# Sell 2000 shares in lots at bid price of a given tick
-# with minimum lot size 100 and maximum lot size 400
-# Therefore, action space is discrete of size 5 (0, 1, 2, 3 , 4)
-
-# "Momentum" for our purposes is the sum of product of last 10 returns and their volumes
-
-# Policy gradient method is used for optimization
-# The policy network has input as momentum(un-standardized), bid_price(standardized), quantity_remaining(in lotSizes)/time_remaining(in secs), current bar_time(standardized minutes)
-
 import tensorflow as tf
 import numpy as np
 import pandas as pd
