@@ -4,12 +4,13 @@ import pandas as pd
 from dataGen import genEpisode, df_trading_day, upperBound, mu_time, std_time
 from environment import Policy, Environment
 import time
+import sys
 
 
 
 alpha = 1e-3
 numtrajs = 10
-iterations = 5000
+iterations = 100
 
 env = Environment()
 obsSize = env.obsSize
@@ -21,7 +22,12 @@ sess = tf.Session()
 optimizer_p = tf.train.AdamOptimizer(alpha)
 
 # initialize networks
-actor = Policy(obsSize, actSize, sess, optimizer_p)
+# if command line parameter is given as '/gpu:0', construct the graph for gpu, else construct for cpu
+if (len(sys.argv) > 1 and sys.argv[1] == '/gpu:0'):
+    actor = Policy(obsSize, actSize, sess, optimizer_p, sys.argv[1])
+else:
+    actor = Policy(obsSize, actSize, sess, optimizer_p)
+
 
 # initialize tensorflow graphs
 sess.run(tf.global_variables_initializer())
@@ -91,10 +97,10 @@ for ite in range(iterations):
     actor.train(OBS, ACTS, VALS)
 
 end_time = time.time()
-train_time = end_time - start_time()
+train_time = end_time - start_time
 
 fp = open('train_time.txt', 'w')
-fp.write(train_time)
+fp.write(str(train_time))
 fp.close()
 
 

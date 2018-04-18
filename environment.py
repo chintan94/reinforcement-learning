@@ -20,41 +20,41 @@ import pandas as pd
 from dataGen import genEpisode, df_trading_day, upperBound, mu_time, std_time
 
 class Policy(object):
-    def __init__(self, obsSize, actSize, sess, optimizer):
+    def __init__(self, obsSize, actSize, sess, optimizer, devicename = '/cpu:0'):
         # obsSize: size of your states
         # actSize: size of your action space
 
         # Input to the network is a vector of state representation
         # And the output of the network is the probability distribution over available actions
+        with tf.device(devicename):
+            n1 = 128
+            n2 = 64
+            state = tf.placeholder(tf.float32, [None, obsSize])
+            l1 = tf.layers.dense(inputs = state, units = n1, activation = tf.nn.sigmoid)
+            l1 = tf.layers.dropout(inputs = l1, rate = 0.4)
+            l2 = tf.layers.dense(inputs = l1, units = n2, activation = tf.nn.relu)
+            l2 = tf.layers.dropout(inputs = l2, rate = 0.2)
+            l3 = tf.layers.dense(inputs = l2, units = actSize)
 
-        n1 = 128
-        n2 = 64
-        state = tf.placeholder(tf.float32, [None, obsSize])
-        l1 = tf.layers.dense(inputs = state, units = n1, activation = tf.nn.sigmoid)
-        l1 = tf.layers.dropout(inputs = l1, rate = 0.4)
-        l2 = tf.layers.dense(inputs = l1, units = n2, activation = tf.nn.relu)
-        l2 = tf.layers.dropout(inputs = l2, rate = 0.2)
-        l3 = tf.layers.dense(inputs = l2, units = actSize)
+            prob = tf.nn.softmax(l3)
 
-        prob = tf.nn.softmax(l3)
+            Q_estimate = tf.placeholder(tf.float32, [None])
+            actions = tf.placeholder(tf.int32, [None])
+            indices = tf.one_hot(actions, depth = actSize, dtype = tf.float32)
 
-        Q_estimate = tf.placeholder(tf.float32, [None])
-        actions = tf.placeholder(tf.int32, [None])
-        indices = tf.one_hot(actions, depth = actSize, dtype = tf.float32)
+            prob_pred = tf.reduce_sum(tf.multiply(prob, indices), axis = 1)
 
-        prob_pred = tf.reduce_sum(tf.multiply(prob, indices), axis = 1)
+            surrogate_loss = -1*tf.reduce_mean(tf.multiply(Q_estimate, tf.log(prob_pred)))
 
-        surrogate_loss = -1*tf.reduce_mean(tf.multiply(Q_estimate, tf.log(prob_pred)))
+            self.train_op = optimizer.minimize(surrogate_loss)
 
-        self.train_op = optimizer.minimize(surrogate_loss)
-
-        self.state = state
-        self.prob = prob
-        self.actions = actions
-        self.Q_estimate = Q_estimate
-        self.loss = surrogate_loss
-        self.optimizer = optimizer
-        self.sess = sess
+            self.state = state
+            self.prob = prob
+            self.actions = actions
+            self.Q_estimate = Q_estimate
+            self.loss = surrogate_loss
+            self.optimizer = optimizer
+            self.sess = sess
 
     def compute_prob(self, states):
         return self.sess.run(self.prob, feed_dict = {self.state:states})
