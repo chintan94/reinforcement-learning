@@ -28,15 +28,18 @@ class Policy(object):
         # And the output of the network is the probability distribution over available actions
         with tf.device(devicename):
             n1 = 128
-            n2 = 64
+            n2 = 128
+            n3 = 128
             state = tf.placeholder(tf.float32, [None, obsSize])
             l1 = tf.layers.dense(inputs = state, units = n1, activation = tf.nn.sigmoid)
             l1 = tf.layers.dropout(inputs = l1, rate = 0.4)
             l2 = tf.layers.dense(inputs = l1, units = n2, activation = tf.nn.relu)
             l2 = tf.layers.dropout(inputs = l2, rate = 0.2)
-            l3 = tf.layers.dense(inputs = l2, units = actSize)
+            l3 = tf.layers.dense(inputs = l2, units = n3)
+            l3 = tf.layers.dropout(inputs = l3, rate = 0.1)
+            l4 = tf.layers.dense(inputs = l3, units = actSize)
 
-            prob = tf.nn.softmax(l3)
+            prob = tf.nn.softmax(l4)
 
             Q_estimate = tf.placeholder(tf.float32, [None])
             actions = tf.placeholder(tf.int32, [None])

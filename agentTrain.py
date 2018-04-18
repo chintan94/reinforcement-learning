@@ -9,7 +9,7 @@ import sys
 
 
 alpha = 1e-3
-numtrajs = 10
+numtrajs = 5
 iterations = 100
 
 env = Environment()
