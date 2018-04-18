@@ -20,7 +20,7 @@ print('Model Restored')
 
 adv = []
 
-iterations = 100
+iterations = 10
 
 for ite in range(iterations):
     
@@ -39,8 +39,9 @@ for ite in range(iterations):
     adv.append(env.averagePrice - env.vwap)
     ACTS = np.array(ACTS)
     VALS = np.array(VALS)
-    AP = np.sum(ACTS*VALS)/20
-    adv.append(AP - vwap)
+
 
 print(adv)
+adv = np.array(adv)
+print(np.mean(adv))
     

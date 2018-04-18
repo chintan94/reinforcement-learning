@@ -3,12 +3,13 @@ import numpy as np
 import pandas as pd
 from dataGen import genEpisode, df_trading_day, upperBound, mu_time, std_time
 from environment import Policy, Environment
+import time
 
 
 
 alpha = 1e-3
 numtrajs = 10
-iterations = 1000
+iterations = 5000
 
 env = Environment()
 obsSize = env.obsSize
@@ -52,6 +53,7 @@ for ite in range(iterations):
 print(adv) """
 
 adv = []
+start_time = time.time()
 for ite in range(iterations):
     
     # trajectory records for batch update
@@ -88,6 +90,13 @@ for ite in range(iterations):
 
     actor.train(OBS, ACTS, VALS)
 
-adv = np.array(adv)
+end_time = time.time()
+train_time = end_time - start_time()
+
+fp = open('train_time.txt', 'w')
+fp.write(train_time)
+fp.close()
+
+
 save_path = saver.save(sess, './model/parameters.ckpt')
 print('Model saved in path ' + str(save_path))
