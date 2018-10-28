@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-from dataGen import genEpisode, df_trading_day, upperBound, mu_time, std_time
 from environment import Policy, Environment
 import time
 import sys
@@ -9,7 +8,7 @@ import sys
 
 
 alpha = 1e-3
-numtrajs = 5
+numtrajs = 10
 iterations = 100
 
 env = Environment()
@@ -32,31 +31,9 @@ else:
 # initialize tensorflow graphs
 sess.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
+saver.restore(sess, './model/parameters.ckpt')
+print('Model Restored')
 
-""" # Difference between VWAP for the minute and average price achieved when random actions are taken by the agent(not trained) in 100 iterations
-adv = []
-
-for ite in range(iterations):
-    
-    ACTS = []
-    VALS = []
-    obs = env.reset()
-    done = False
-
-    while not done:
-        prob = actor.compute_prob(np.expand_dims(obs, 0))
-        action = np.random.choice(actSize, p = prob.flatten())
-        newobs, reward, done, vwap = env.step(action)
-        obs = newobs
-        ACTS.append(env.action)
-        VALS.append(env.episodeSlice.iloc[env.index]['Bid_Price'])
-
-    ACTS = np.array(ACTS)
-    VALS = np.array(VALS)
-    AP = np.sum(ACTS*VALS)/20
-    adv.append(AP - vwap)
-
-print(adv) """
 
 adv = []
 start_time = time.time()
@@ -73,12 +50,12 @@ for ite in range(iterations):
         acts = []
         rews = []
 
-        obs = env.reset()
-        done = False
+        obs, done = env.reset()
 
         while not done:
             prob = actor.compute_prob(np.expand_dims(obs, 0))
             action = np.random.choice(actSize, p=prob.flatten())
+            #action = np.argmax(prob)
             newobs, reward, done, _ = env.step(action)
 
             obss.append(obs)
@@ -96,13 +73,13 @@ for ite in range(iterations):
 
     actor.train(OBS, ACTS, VALS)
 
-end_time = time.time()
+""" end_time = time.time()
 train_time = end_time - start_time
 
 fp = open('train_time.txt', 'w')
 fp.write(str(train_time))
 fp.close()
-
+ """
 
 save_path = saver.save(sess, './model/parameters.ckpt')
 print('Model saved in path ' + str(save_path))

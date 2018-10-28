@@ -66,6 +66,7 @@ class Policy(object):
         self.sess.run(self.train_op, feed_dict = {self.state:states, self.actions:actions, self.Q_estimate:Qs})
 
 
+
 class Environment(object):
     def __init__(self):
         self.episodeSlice = False
@@ -85,10 +86,13 @@ class Environment(object):
         self.action = False
         self.averagePrice = False
     
-    def reset(self):
+    def reset(self, qty = 20, epSlice = pd.Series([])):
         self.done = False
-        # randomly generate an episode
-        self.episodeSlice = genEpisode(df_trading_day, upperBound)
+        # randomly generate an episode if no episode slice given (during training)
+        if epSlice.empty:
+            self.episodeSlice = genEpisode(df_trading_day, upperBound)
+        else:
+            self.episodeSlice = epSlice
         self.vwap = (self.episodeSlice['Trade Price']*self.episodeSlice['Trade Volume']).sum()/self.episodeSlice['Trade Volume'].sum()
         # The first tick of episode slice
         tick = self.episodeSlice.iloc[0]
@@ -98,13 +102,15 @@ class Environment(object):
         current_time_in_minutes = current_time - pd.Timedelta(hours = 9, minutes = 30)
         self.endTime = current_time_in_minutes + pd.Timedelta(seconds = 60)
         self.time_remaining = (self.endTime - current_time_in_minutes).total_seconds()
-        self.quantity_remaining = 20    # total of 20 lot sizes
+        self.total_quantity = float(qty)   # total of 20 lot sizes by default
+        if self.total_quantity == 0:
+            self.done = True
+        self.quantity_remaining = self.total_quantity
         self.averagePrice = 0.0
-        current_time_in_minutes = current_time_in_minutes.hour*60 + current_time_in_minutes.minute
-        self.barTime = (current_time_in_minutes - mu_time)/std_time 
+        self.barTime = (self.episodeSlice.iloc[0]['time_in_minutes'] - mu_time)/std_time 
         # state for any given episode is the array of [momentum, bid_price, quantity_remaining/time_remaining, barTime]
         self.state = np.array([tick['momentum'], tick['Bid_Price'], self.quantity_remaining/self.time_remaining, self.barTime])
-        return self.state
+        return self.state, self.done
 
     # This is the function which executes one step of the action taken by the agent in a given episode
     # Input to the function is the time index where the action was taken and the action taken
@@ -122,7 +128,7 @@ class Environment(object):
         # next state is the array of [momentum, bid_price, quantity_remaining/time_remaining, barTime]
         self.state = np.array([tick['momentum'], tick['Bid_Price'], self.quantity_remaining/self.time_remaining, self.barTime])
         # Reward is the difference between price achieved by the action and the observed vwap, weighted by the action weight
-        action_weight = self.action/20.0
+        action_weight = self.action/self.total_quantity
         self.obsVwap = (self.episodeSlice[:time_index]['Trade Price']*self.episodeSlice[:time_index]['Trade Volume']).sum()/self.episodeSlice[:time_index]['Trade Volume'].sum()
         self.averagePrice += tick['Bid_Price']*action_weight
         if not self.done: 

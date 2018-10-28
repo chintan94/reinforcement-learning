@@ -1,0 +1,6 @@
+*.png
+/plots
+*.pyc
+anaconda.yml
+spec-list.txt
+train_time.txt
